@@ -16,7 +16,7 @@ First, run some servers with different ports:
 
 Then, run the client passing the ports you used for the servers as arguments:
 
-    $ ./client.py 8001 8002 8003
+    $ ./client.py 8001 8002 8003 &
 
 Now, see how the random processing times from the services respond back to the client, asynchronously, and the client prints the
 order in which it receives these replies in the HTTP response:
