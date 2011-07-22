@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
 import sys
+import time
 
 import tornado
 import tornado.web
-import zmq
-from zmq.eventloop import ioloop, zmqstream
+import tornado.httpclient
+#import zmq
+#from zmq.eventloop import ioloop, zmqstream
 
-tornado.ioloop = ioloop
+#tornado.ioloop = ioloop
 
 
-class Handler(tornado.web.RequestHandler):
+class ZmqHandler(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(Handler, self).__init__(*args, **kwargs)
 
@@ -35,7 +37,28 @@ class Handler(tornado.web.RequestHandler):
     def get(self):
         self.stream.send("")
 
-application = tornado.web.Application([(r'/', Handler)])
+
+class HttpHandler(tornado.web.RequestHandler):
+    def _receive(self, response):
+        self.write('got: %s' % response.body)
+        self.finish()
+
+    @tornado.web.asynchronous
+    def get(self):
+        http = tornado.httpclient.AsyncHTTPClient()
+        http.fetch("http://localhost:8000/slow/", callback=self._receive)
+
+
+class SlowHandler(tornado.web.RequestHandler):
+    def get(self):
+        time.sleep(1)
+        self.write('HTTP response')
+
+application = tornado.web.Application([
+    #(r'/zmq/', ZmqHandler),
+    (r'/http/', HttpHandler),
+    (r'/slow/', SlowHandler),
+])
 
 port = sys.argv[1]
 application.listen(port)
