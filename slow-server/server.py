@@ -5,20 +5,19 @@ import sys
 import time
 
 import zmq
-from zmq.eventloop import IOLoop
+from zmq.eventloop import ioloop, zmqstream
 
-loop = IOLoop.instance()
+loop = ioloop.IOLoop.instance()
 
 context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://127.0.0.1:5000")
+stream = zmqstream.ZMQStream(socket, loop)
 
-rep = context.socket(zmq.REP)
-rep.bind("tcp://127.0.0.1:5000")
-
-def on_receive(sock, events):
-    sock.recv()
+def on_receive(message):
     time.sleep(1)
-    sock.send('0MQ response')
+    stream.send('0MQ response')
 
-loop.add_handler(rep, on_receive, zmq.POLLIN)
+stream.on_recv(on_receive)
 
 loop.start()

@@ -6,15 +6,15 @@ import time
 import tornado
 import tornado.web
 import tornado.httpclient
-#import zmq
-#from zmq.eventloop import ioloop, zmqstream
+import zmq
+from zmq.eventloop import ioloop, zmqstream
 
-#tornado.ioloop = ioloop
+tornado.ioloop = ioloop
 
 
 class ZmqHandler(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
-        super(Handler, self).__init__(*args, **kwargs)
+        super(ZmqHandler, self).__init__(*args, **kwargs)
 
         self.counter = 0
         self.requests = 10
@@ -35,18 +35,20 @@ class ZmqHandler(tornado.web.RequestHandler):
 
     @tornado.web.asynchronous
     def get(self):
+        print 'will send...'
         self.stream.send("")
+        print 'sent.'
 
 
 class HttpHandler(tornado.web.RequestHandler):
-    def _receive(self, response):
+    def receive(self, response):
         self.write('got: %s' % response.body)
         self.finish()
 
     @tornado.web.asynchronous
     def get(self):
         http = tornado.httpclient.AsyncHTTPClient()
-        http.fetch("http://localhost:8000/async-slow/", callback=self._receive)
+        http.fetch("http://localhost:8000/async-slow/", callback=self.receive)
 
 
 class SlowHandler(tornado.web.RequestHandler):
@@ -56,16 +58,16 @@ class SlowHandler(tornado.web.RequestHandler):
 
 
 class AsyncSlowHandler(tornado.web.RequestHandler):
-    def _reply(self):
+    def reply(self):
         self.write('HTTP response')
         self.finish()
 
     @tornado.web.asynchronous
     def get(self):
-        tornado.ioloop.IOLoop.instance().add_timeout(time.time() + 1, self._reply)
+        tornado.ioloop.IOLoop.instance().add_timeout(time.time() + 1, self.reply)
 
 application = tornado.web.Application([
-    #(r'/zmq/', ZmqHandler),
+    (r'/zmq/', ZmqHandler),
     (r'/http/', HttpHandler),
     (r'/slow/', SlowHandler),
     (r'/async-slow/', AsyncSlowHandler),
