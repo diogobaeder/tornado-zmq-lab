@@ -46,15 +46,13 @@ class HttpHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
         http = tornado.httpclient.AsyncHTTPClient()
-        http.fetch("http://localhost:8000/slow/", callback=self._receive)
+        http.fetch("http://localhost:8000/async-slow/", callback=self._receive)
 
 
 class SlowHandler(tornado.web.RequestHandler):
     def get(self):
-        print 'will reply...'
         time.sleep(1)
         self.write('HTTP response')
-        print 'replied'
 
 
 class AsyncSlowHandler(tornado.web.RequestHandler):
@@ -64,9 +62,7 @@ class AsyncSlowHandler(tornado.web.RequestHandler):
 
     @tornado.web.asynchronous
     def get(self):
-        print 'will reply...'
-        tornado.ioloop.IOLoop.instance().add_timeout(1000, self._reply)
-        print 'replied'
+        tornado.ioloop.IOLoop.instance().add_timeout(time.time() + 1, self._reply)
 
 application = tornado.web.Application([
     #(r'/zmq/', ZmqHandler),
